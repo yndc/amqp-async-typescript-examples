@@ -12,7 +12,7 @@ const createSender = (
   await channel.waitForConfirms()
 }
 
-async function main() {
+async function start() {
   const { hostname, queue, username, password, port } = config
   const connection = await connect({ hostname, port, username, password })
   const channel = await connection.createConfirmChannel()
@@ -27,6 +27,6 @@ async function main() {
   await connection.close()
 }
 
-main().catch(e => {
+start().catch(e => {
   console.error(e)
 })
