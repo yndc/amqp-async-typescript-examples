@@ -14,10 +14,8 @@ async function start() {
   console.log(` [x] Waiting for messages... (Press CTRL+C to stop)`)
   await channel.consume(queue, message => {
     const content = message.content.toString()
-    console.log(` [x] Received message: ${content}`)
     const delay = (content.split(".").length - 1) * 1000
-
-    // Simulate a heavy workload
+    console.log(` [x] Received message: ${content}`)
     setTimeout(function() {
       channel.ack(message)
       console.log(` [x] ${content} Done`)
@@ -27,9 +25,4 @@ async function start() {
 
 start().catch(e => {
   console.error(e)
-})
-
-process.on("beforeExit", () => {
-  connection.close()
-  console.log(` [CONSUMER] Stopped listening, closing.`)
 })

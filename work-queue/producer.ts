@@ -13,8 +13,6 @@ const createSender = (
 }
 
 async function main() {
-  // const message = process.argv.slice(2).join(" ")
-  // if (!message) throw "Empty message!"
   const { hostname, queue, username, password, port } = config
   const connection = await connect({ hostname, port, username, password })
   const channel = await connection.createConfirmChannel()
@@ -29,10 +27,6 @@ async function main() {
   await connection.close()
 }
 
-main()
-  .then(() => {
-    process.exit(0)
-  })
-  .catch(e => {
-    console.error(e)
-  })
+main().catch(e => {
+  console.error(e)
+})
