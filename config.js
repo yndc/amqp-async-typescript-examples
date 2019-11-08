@@ -4,5 +4,5 @@ module.exports = {
   hostname: `localhost`,
   port: 5672,
   queue: `tasks`,
-  pubsubExchange: `notifier`
+  logger: `logger`
 }

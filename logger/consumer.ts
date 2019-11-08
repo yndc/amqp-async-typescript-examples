@@ -1,17 +1,27 @@
 #!/usr/bin/env ts-node
 
 import { connect } from "amqplib"
-import config from "../config"
+import * as config from "../config"
 
 async function start() {
-  const { hostname, pubsubExchange, username, password, port } = config
+  const { hostname, logger, username, password, port } = config
+
+  // Prepare connection
   const connection = await connect({ hostname, port, username, password })
   const channel = await connection.createConfirmChannel()
-  await channel.assertExchange(pubsubExchange, "fanout", { durable: true })
+
+  // Parse arguments
+  const severities = process.argv.slice(2)
+
+  // Prepare exchange and queue
+  await channel.assertExchange(logger, "direct", { durable: false })
   const queue = await channel.assertQueue("", { exclusive: true })
   const queueName = queue.queue
-  await channel.bindQueue(queueName, pubsubExchange, "")
-  console.log(` Binded queue ${queueName} to ${pubsubExchange}`)
+  for (let i = 0; i < severities.length; i++) {
+    console.log(` Binded queue ${queueName} to ${logger} with routing: ${severities[i]}`)
+    await channel.bindQueue(queueName, logger, severities[i])
+  }
+
   console.log(` [x] Waiting for messages... (Press CTRL+C to stop)`)
   await channel.consume(
     queueName,
