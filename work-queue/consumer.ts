@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { connect, Connection } from "amqplib"
+import { connect } from "amqplib"
 import config from "../config"
 
 async function start() {

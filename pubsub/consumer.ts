@@ -1,43 +1,29 @@
 #!/usr/bin/env ts-node
 
-import { connect, Connection } from "amqplib";
-
-const config = {
-  username: `localdev`,
-  password: `ayylmao123`,
-  hostname: `localhost`,
-  port: 5672,
-  queue: `tasks`
-};
-
-let connection: Connection;
+import { connect } from "amqplib"
+import config from "../config"
 
 async function start() {
-  const { hostname, queue, username, password, port } = config;
-  connection = await connect({ hostname, port, username, password });
-  const channel = await connection.createConfirmChannel();
-  await channel.assertQueue(queue);
-  await channel.prefetch(1);
-  console.log(` [x] Waiting for messages... (Press CTRL+C to stop)`);
-  await channel.consume(queue, message => {
-    const content = message.content.toString();
-    if (!content) return;
-    console.log(` [x] Received message: ${content}`);
-    const delay = (content.split(".").length - 1) * 1000;
-
-    // Simulate a heavy workload
-    setTimeout(function() {
-      channel.ack(message);
-      console.log(` [x] ${content} Done`);
-    }, delay);
-  });
+  const { hostname, pubsubExchange, username, password, port } = config
+  const connection = await connect({ hostname, port, username, password })
+  const channel = await connection.createConfirmChannel()
+  await channel.assertExchange(pubsubExchange, "fanout", { durable: true })
+  const queue = await channel.assertQueue("", { exclusive: true })
+  const queueName = queue.queue
+  await channel.bindQueue(queueName, pubsubExchange, "")
+  console.log(` Binded queue ${queueName} to ${pubsubExchange}`)
+  console.log(` [x] Waiting for messages... (Press CTRL+C to stop)`)
+  await channel.consume(
+    queueName,
+    message => {
+      const content = message.content.toString()
+      console.log(content)
+      channel.ack(message)
+    },
+    { noAck: false }
+  )
 }
 
 start().catch(e => {
-  console.error(e);
-});
-
-process.on("beforeExit", () => {
-  connection.close();
-  console.log(` [CONSUMER] Stopped listening, closing.`);
-});
+  console.error(e)
+})
